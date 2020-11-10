@@ -94,9 +94,18 @@ func (c *Cron) AddFunc(spec string, cmd func(), name string) {
 	c.AddJob(spec, FuncJob(cmd), name)
 }
 
+func (c *Cron) AddOnceFunc(time time.Time, cmd func(), name string) {
+	c.AddOnceJob(time, FuncJob(cmd), name)
+}
+
 // AddFunc adds a Job to the Cron to be run on the given schedule.
 func (c *Cron) AddJob(spec string, cmd Job, name string) {
 	c.Schedule(Parse(spec), cmd, name)
+}
+
+// AddFunc adds a Job to the Cron to be run on the given schedule.
+func (c *Cron) AddOnceJob(time time.Time, cmd Job, name string) {
+	c.Schedule(CreateOnceSchedule(time), cmd, name)
 }
 
 // RemoveJob removes a Job from the Cron based on name.
@@ -191,7 +200,13 @@ func (c *Cron) run() {
 				}
 				go e.Job.Run()
 				e.Prev = e.Next
+				if v, ok:= e.Schedule.(*OnceSchedule); ok {
+					v.Done()
+				}
 				e.Next = e.Schedule.Next(effective)
+				if e.Next.IsZero() {
+					go c.RemoveJob(e.Name)
+				}
 			}
 			continue
 

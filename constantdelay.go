@@ -26,3 +26,22 @@ func Every(duration time.Duration) ConstantDelaySchedule {
 func (schedule ConstantDelaySchedule) Next(t time.Time) time.Time {
 	return t.Add(schedule.Delay - time.Duration(t.Nanosecond())*time.Nanosecond)
 }
+
+
+type OnceSchedule struct {
+	time time.Time
+}
+
+func CreateOnceSchedule(time time.Time) *OnceSchedule {
+	return &OnceSchedule{
+		time: time,
+	}
+}
+
+func (schedule *OnceSchedule) Next(t time.Time) time.Time {
+	return schedule.time
+}
+
+func (schedule *OnceSchedule) Done() {
+	schedule.time = time.Time{}
+}
